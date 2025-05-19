@@ -5,7 +5,7 @@ const VERIFY_TOKEN = 'ares_token';
 
 app.use(bodyParser.json());
 
-// تحقق فيسبوك
+// تحقق من Facebook
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -19,7 +19,7 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// استقبال الرسائل من فيسبوك
+// استقبال الرسائل من Facebook
 app.post('/webhook', (req, res) => {
   const body = req.body;
 
@@ -37,7 +37,8 @@ app.post('/webhook', (req, res) => {
   }
 });
 
-// 👇 هذا السطر المهم
-app.listen(3000, '0.0.0.0', () => {
-  console.log('🚀 السيرفر شغال على http://0.0.0.0:3000');
+// ✅ استخدم البورت الصحيح لبيئة Render
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 السيرفر شغال على http://0.0.0.0:${PORT}`);
 });
