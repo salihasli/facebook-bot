@@ -18,11 +18,12 @@ app.get('/webhook', (req, res) => {
     console.log('✅ تحقق فيسبوك نجح');
     res.status(200).send(challenge);
   } else {
+    console.log('❌ فشل التحقق - Verify Token غلط');
     res.sendStatus(403);
   }
 });
 
-// ✅ دالة الرد
+// ✅ دالة الرد على الرسالة
 function sendMessage(senderId, messageText) {
   const url = `https://graph.facebook.com/v17.0/me/messages?access_token=${PAGE_ACCESS_TOKEN}`;
 
@@ -32,29 +33,43 @@ function sendMessage(senderId, messageText) {
   };
 
   axios.post(url, body)
-    .then(() => console.log(`✅ تم الرد على ${senderId}`))
-    .catch(err => console.error('❌ فشل الإرسال:', err?.response?.data || err));
+    .then(() => console.log(`✅ تم الرد على ${senderId} برسالة: ${messageText}`))
+    .catch(err => {
+      console.log('❌ فشل إرسال الرد:');
+      console.log(err.response?.data || err.message || err);
+    });
 }
 
-// ✅ استقبال الرسائل
+// ✅ استقبال رسائل POST من Facebook
 app.post('/webhook', (req, res) => {
+  console.log('\n📥 وصل طلب POST من Facebook:');
+  console.log(JSON.stringify(req.body, null, 2));
+
   const body = req.body;
 
   if (body.object === 'page') {
     body.entry.forEach(entry => {
-      const event = entry.messaging?.[0];
-      const sender = event?.sender?.id;
-      const msg = event?.message?.text;
+      console.log('🔹 Entry:', JSON.stringify(entry, null, 2));
 
-      console.log(`📩 رسالة من ${sender}: ${msg}`);
+      const messagingEvents = entry.messaging || [];
+      messagingEvents.forEach(event => {
+        const sender = event?.sender?.id;
+        const msg = event?.message?.text;
 
-      if (msg?.toLowerCase().includes('السعر')) {
-        sendMessage(sender, 'السعر هو 10,000 د.ع ❤️');
-      }
+        console.log(`📩 رسالة من: ${sender}`);
+        console.log(`💬 محتوى الرسالة: ${msg}`);
+
+        if (msg?.toLowerCase().includes('السعر')) {
+          sendMessage(sender, 'السعر هو 10,000 د.ع ❤️');
+        } else {
+          console.log('ℹ️ الرسالة لا تحتوي على كلمة "السعر"');
+        }
+      });
     });
 
     res.status(200).send('تم الاستلام');
   } else {
+    console.log('❌ نوع الـ body غير متوقع:', body.object);
     res.sendStatus(404);
   }
 });
